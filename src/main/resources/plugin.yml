@@ -1,3 +1,9 @@
 name: DestroyerOfWorlds
 main: Hax.Bukkit.DestroyerOfWorlds.DestroyerOfWorlds
 version: 1.0
+commands:
+  begin:
+    description: begin the DestroyerOfWorlds server
+    usage: /begin
+    permission: DestroyerOfWorlds.begin
+    permission-message: You don't have permission. Try sudo :)

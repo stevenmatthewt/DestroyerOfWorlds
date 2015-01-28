@@ -1,6 +1,8 @@
 package Hax.Bukkit.DestroyerOfWorlds;
 
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -22,15 +24,17 @@ public class EventListener implements Listener {
     		return;
     	}
     	
-    	if (!event.getDamager().getType().equals(EntityType.PLAYER)) {
+    	if (!(((Projectile) event.getDamager()).getShooter() instanceof Player)) {
     		return;
     	}
-    	
-    	plugin.setLastDamagedBy(event.getEntity().getName(), event.getDamager().getName());
+    	plugin.setLastDamagedBy(event.getEntity().getName(), ((Player)((Projectile) event.getDamager()).getShooter()).getName());
     }
     
     @EventHandler
     public void onEntityDeathEvent(EntityDeathEvent event) {
-    	plugin.giveKill(event.getEntity().getName());
+    	if (event.getEntityType().equals(EntityType.PLAYER)) {
+    		plugin.playerDied((Player) event.getEntity());
+    		plugin.checkGameOver();
+    	}
     }
 }

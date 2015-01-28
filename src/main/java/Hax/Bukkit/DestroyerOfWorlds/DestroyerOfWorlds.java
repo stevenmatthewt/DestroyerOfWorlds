@@ -1,9 +1,11 @@
 package Hax.Bukkit.DestroyerOfWorlds;
  
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -24,11 +26,20 @@ public final class DestroyerOfWorlds extends JavaPlugin {
 	Team teamFrost;
 	Objective objective;
 	
+	ArrayList<Player> alivePlayers;
+	ArrayList<Player> deadPlayers;
 	HashMap<String, String> lastDamagedBy;
 	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (cmd.getName().equalsIgnoreCase("begin")) {
+	    	deadPlayers = new ArrayList<Player>();
+	    	alivePlayers = new ArrayList<Player>(getServer().getOnlinePlayers());
+	    	
+	    	for (Player p : alivePlayers) {
+	    		p.setGameMode(GameMode.SURVIVAL);
+	    	}
+	    	
 			setScoreBoards();
 			return true;
 		}
@@ -68,18 +79,22 @@ public final class DestroyerOfWorlds extends JavaPlugin {
 				public void run() {
 					lastDamagedBy.put(damaged, null);
 				}
-			}, 150);
+			}, 300);
     }
     
     public String getLastDamagedBy(String damaged) {
     	return lastDamagedBy.get(damaged);
     }
     
-    public void giveKill(String dead) {
-    	if (lastDamagedBy.get(dead) == null) {
+    public void playerDied(Player dead) {
+    	dead.setGameMode(GameMode.SPECTATOR);
+    	String deadName = dead.getName();
+    	alivePlayers.remove(dead);
+    	deadPlayers.add(dead);
+    	if (lastDamagedBy.get(deadName) == null) {
     		return;
     	}
-    	Player killer = getServer().getPlayer(lastDamagedBy.get(dead));
+    	Player killer = getServer().getPlayer(lastDamagedBy.get(deadName));
     	if (killer == null) {
     		return;
     	}
@@ -87,17 +102,22 @@ public final class DestroyerOfWorlds extends JavaPlugin {
     		Score score = objective.getScore(killer);
     		score.setScore(score.getScore() + 1);
     		
-    		lastDamagedBy.put(dead, null);
+    		lastDamagedBy.put(deadName, null);
     	}
     }
     
     public void setScoreBoards() {
     	for (Player p : getServer().getOnlinePlayers()) {
-    		System.out.println("Setting scoreboard for: " + p.getName());
     		p.setScoreboard(board);
     		
     		Score score = objective.getScore(p);
     		score.setScore(0);
+    	}
+    }
+    
+    public void checkGameOver() {
+    	if (alivePlayers.size() == 1) {
+    		alivePlayers.get(0).sendMessage("You winned the game!!!");
     	}
     }
 }

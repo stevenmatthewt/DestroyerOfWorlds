@@ -1,5 +1,6 @@
 package Hax.Bukkit.DestroyerOfWorlds;
 
+import org.bukkit.GameMode;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -10,6 +11,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 public class EventListener implements Listener {
@@ -33,10 +35,8 @@ public class EventListener implements Listener {
                 public void run() {
                     Vector knockback = hurt.getVelocity().multiply(knockbackFactor);
                     hurt.setVelocity(knockback);
-                    System.out.println(hurt.getVelocity());
-                    System.out.println(knockbackFactor);
                 }
-            }, 1L);
+            }, 3);
     		
     		if (event.getDamager().getType().equals(EntityType.PLAYER)) {
         		damager = (Player) event.getDamager();
@@ -55,10 +55,21 @@ public class EventListener implements Listener {
     }
     
     @EventHandler
-    public void onEntityDeathEvent(EntityDeathEvent event) {
+    public void onDamage(EntityDamageEvent event) {
     	if (event.getEntityType().equals(EntityType.PLAYER)) {
-    		plugin.playerDied((Player) event.getEntity());
-    		plugin.checkGameOver();
+    		Player player = ((Player) event.getEntity());
+    		if (player.getHealth() - event.getDamage() <= 0) {
+	    		player.setGameMode(GameMode.SPECTATOR);
+	    		for (ItemStack stack : player.getInventory()) {
+	    			if (stack != null) {
+	    				player.getWorld().dropItemNaturally(player.getLocation(), stack);
+	    			}
+	    		}
+	    		player.getInventory().clear();
+	    		plugin.playerDied((Player) event.getEntity());
+	    		plugin.checkGameOver();
+	    		event.setDamage(0);
+    		}
     	}
     }
 }
